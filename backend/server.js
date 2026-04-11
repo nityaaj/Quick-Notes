@@ -81,6 +81,41 @@ const server = http.createServer((req, res) => {
     return res.end("Deleted");
   }
 
+  // -------- UPDATE NOTE --------
+else if (req.method === "PUT" && req.url.startsWith("/notes/")) {
+  const id = req.url.split("/")[2];
+
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", () => {
+    const { title, content } = JSON.parse(body);
+
+    let notes = getNotes();
+
+    notes = notes.map((note) => {
+      if (note.id === id) {
+        return {
+          ...note,
+          title: title || note.title,
+          content: content || note.content,
+        };
+      }
+      return note;
+    });
+
+    saveNotes(notes);
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ message: "Note updated" }));
+  });
+
+  return;
+}
+
   // -------- NOT FOUND --------
   res.writeHead(404);
   res.end("Route not found");
