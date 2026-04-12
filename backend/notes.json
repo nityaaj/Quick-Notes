@@ -1,9 +1,50 @@
 [
   {
+    "id": "1775997416282",
+    "title": "Hey there",
+    "content": "I am nityaa",
+    "createdAt": "2026-04-12T12:36:56.284Z"
+  },
+  {
+    "id": "1775997042206",
+    "title": "Hey There !!! Easy Writing ✍️ ",
+    "content": "Once apon a time there was a tree behind a hous in KAKA Town of Bhilwara ",
+    "createdAt": "2026-04-12T12:30:42.207Z"
+  },
+  {
+    "id": "1775996440093",
+    "title": "Electricity Bill",
+    "content": "1200 March to April ",
+    "createdAt": "2026-04-12T12:20:40.094Z"
+  },
+  {
+    "id": "1775995623442",
+    "title": "Task Management ",
+    "content": "Make notes for Meeting ",
+    "createdAt": "2026-04-12T12:07:03.443Z"
+  },
+  {
+    "id": "1775995154973",
+    "title": "Hey Siri!",
+    "content": "Tell me the best food near me...",
+    "createdAt": "2026-04-12T11:59:14.973Z"
+  },
+  {
+    "id": "1775994472085",
+    "title": "TO DO List",
+    "content": "Breakfast at 9",
+    "createdAt": "2026-04-12T11:47:52.086Z"
+  },
+  {
+    "id": "1775994440202",
+    "title": "Hey World ",
+    "content": "My First Notes App",
+    "createdAt": "2026-04-12T11:47:20.203Z"
+  },
+  {
     "id": "1775823545216",
     "title": "my first note",
     "content": "Hello World!",
     "createdAt": "2026-04-10T12:19:05.217Z"
-  },
-  "NITYAA"
+  }
 ]
