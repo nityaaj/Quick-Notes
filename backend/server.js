@@ -17,7 +17,7 @@ function saveNotes(notes) {
 const server = http.createServer((req, res) => {
   // allow frontend connection
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
@@ -100,8 +100,8 @@ else if (req.method === "PUT" && req.url.startsWith("/notes/")) {
       if (note.id === id) {
         return {
           ...note,
-          title: title || note.title,
-          content: content || note.content,
+          title: title !== undefined ? title : note.title,
+          content: content !== undefined ? content : note.content,
         };
       }
       return note;
