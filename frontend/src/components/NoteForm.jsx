@@ -1,7 +1,7 @@
 import { useState } from "react";
 import API from "../api";
 
-function NoteForm({ refreshNotes, onClose, colors }) {
+function NoteForm({ refreshNotes, onClose, colors, userId }) {
   const [title, setTitle]         = useState("");
   const [content, setContent]     = useState("");
   const [loading, setLoading]     = useState(false);
@@ -13,8 +13,8 @@ function NoteForm({ refreshNotes, onClose, colors }) {
     if (title.trim() === "") return;
     setLoading(true);
     // ✅ colorId is saved with the note so the card ALWAYS shows the right color
-    await API.post("/notes", { title, content, colorId: pickedId });
-    setLoading(false);
+    await API.post("/notes", { title, content, userId });
+    setLoading(false)
     refreshNotes();
     onClose();
   }
