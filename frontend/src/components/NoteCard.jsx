@@ -40,11 +40,18 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
   }
 
   async function handleUpdate() {
-    if (editTitle.trim() === "") return;
-    await API.put(`/notes/${note.id}`, { title: editTitle, content: editContent });
-    setIsEditing(false);
-    refreshNotes();
-  }
+  console.log("Updating note...");
+  if (editTitle.trim() === "") return;
+
+  await API.put(`/notes/${note.id}`, {
+    title: editTitle,
+    content: editContent
+  });
+
+  console.log("Updated!");
+  setIsEditing(false);
+  refreshNotes();
+}
 
   function cancelEdit() {
     setEditTitle(note.title);
