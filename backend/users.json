@@ -5,5 +5,12 @@
     "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
     "createdAt": "2026-04-13T15:31:13.239Z",
     "updatedAt": null
+  },
+  {
+    "id": "1776166767977",
+    "email": "test@yopmail.com",
+    "password": "8622f0f69c91819119a8acf60a248d7b36fdb7ccf857ba8f85cf7f2767ff8265",
+    "createdAt": "2026-04-14T11:39:27.982Z",
+    "updatedAt": null
   }
 ]
