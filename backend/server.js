@@ -3,7 +3,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
 
-const PORT = 5002; // Changed port to avoid conflict
+const PORT = process.env.PORT || 5002; // Render sets PORT in production.
 
 const notesPath = path.join(__dirname, "notes.json");
 const usersPath = path.join(__dirname, "users.json");
@@ -42,6 +42,9 @@ function parseBody(req) {
 // ─────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const pathname = url.pathname.replace(/\/$/, "") || "/";
+
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -49,7 +52,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") { res.writeHead(200); return res.end(); }
 
   // ── REGISTER ─────────────────────────────────────────
-  if (req.method === "POST" && req.url === "/auth/register") {
+  if (req.method === "POST" && ["/auth/register", "/api/auth/register"].includes(pathname)) {
     const { email, password } = await parseBody(req);
 
     if (!email || !password) {
@@ -80,7 +83,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── LOGIN ─────────────────────────────────────────────
-  if (req.method === "POST" && req.url === "/auth/login") {
+  if (req.method === "POST" && ["/auth/login", "/api/auth/login"].includes(pathname)) {
     const { email, password } = await parseBody(req);
 
     if (!email || !password) {
@@ -104,8 +107,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── GET NOTES (filtered by userId) ───────────────────
-  if (req.method === "GET" && req.url.startsWith("/notes")) {
-    const url = new URL(req.url, `http://localhost:${PORT}`);
+  if (req.method === "GET" && ["/notes", "/api/notes"].includes(pathname)) {
     const userId = url.searchParams.get("userId");
 
     let notes = getNotes().filter((n) => !n.deletedAt);
@@ -116,7 +118,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── CREATE NOTE ───────────────────────────────────────
-  if (req.method === "POST" && req.url === "/notes") {
+  if (req.method === "POST" && ["/notes", "/api/notes"].includes(pathname)) {
     const { title, content, userId } = await parseBody(req);
 
     if (!title || title.trim() === "") {
@@ -142,8 +144,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── DELETE NOTE ───────────────────────────────────────
-  if (req.method === "DELETE" && req.url.startsWith("/notes/")) {
-    const id = req.url.split("/")[2];
+  if (req.method === "DELETE" && (pathname.startsWith("/notes/") || pathname.startsWith("/api/notes/"))) {
+    const id = pathname.split("/").pop();
     let notes = getNotes();
     notes = notes.map((n) =>
       n.id === id ? { ...n, deletedAt: new Date().toISOString() } : n
@@ -153,8 +155,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ── UPDATE NOTE ───────────────────────────────────────
-  if (req.method === "PUT" && req.url.startsWith("/notes/")) {
-    const id = req.url.split("/")[2];
+  if (req.method === "PUT" && (pathname.startsWith("/notes/") || pathname.startsWith("/api/notes/"))) {
+    const id = pathname.split("/").pop();
     const { title, content } = await parseBody(req);
 
     let notes = getNotes();
