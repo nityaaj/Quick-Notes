@@ -1,362 +1,325 @@
 import { useEffect, useState } from "react";
 import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
+	DndContext,
+	closestCenter,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	DragOverlay,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
-  SortableContext,
-  rectSortingStrategy,
+	arrayMove,
+	SortableContext,
+	rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import API from "./api";
 import NoteForm from "./components/NoteForm";
 import NoteCard from "./components/NoteCard";
+import AuthPage from "./components/AuthPage";
 
 export const CARD_COLORS = [
-  { bg: "#FFF3CC", accent: "#E6B800" },
-  { bg: "#FFE0E0", accent: "#E05555" },
-  { bg: "#D9F5E8", accent: "#2E9E65" },
-  { bg: "#E0EEFF", accent: "#3070D6" },
-  { bg: "#F0E0FF", accent: "#8040C8" },
-  { bg: "#FFE8D6", accent: "#D06020" },
+	{ id: "yellow", bg: "#FFF3CC", accent: "#E6B800" },
+	{ id: "pink", bg: "#FFE0E0", accent: "#E05555" },
+	{ id: "green", bg: "#D9F5E8", accent: "#2E9E65" },
+	{ id: "blue", bg: "#E0EEFF", accent: "#3070D6" },
+	{ id: "purple", bg: "#F0E0FF", accent: "#8040C8" },
+	{ id: "peach", bg: "#FFE8D6", accent: "#D06020" },
 ];
 
 function App() {
-  const [notes, setNotes] = useState([]);
-  const [activeNote, setActiveNote] = useState(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
+	const [user, setUser] = useState(() => {
+		const savedUser = localStorage.getItem("notesUser");
+		try {
+			return savedUser ? JSON.parse(savedUser) : null;
+		} catch {
+			localStorage.removeItem("notesUser");
+			return null;
+		}
+	});
 
-  async function fetchNotes() {
-    const res = await API.get("/notes");
-    setNotes(res.data);
-  }
+	const [notes, setNotes] = useState([]);
+	const [activeNote, setActiveNote] = useState(null);
+	const [activeIndex, setActiveIndex] = useState(0);
+	const [search, setSearch] = useState("");
+	const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+	async function fetchNotes() {
+		if (!user?.id) return;
+		const res = await API.get(`/notes?userId=${encodeURIComponent(user.id)}`);
+		setNotes(res.data);
+	}
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+	useEffect(() => {
+		fetchNotes();
+	}, [user]);
 
-  function handleDragStart(event) {
-    const idx = notes.findIndex((n) => n.id === event.active.id);
-    setActiveNote(notes[idx]);
-    setActiveIndex(idx);
-  }
+	function handleAuth(authUser) {
+		localStorage.setItem("notesUser", JSON.stringify(authUser));
+		setUser(authUser);
+	}
 
-  function handleDragEnd(event) {
-    const { active, over } = event;
-    setActiveNote(null);
-    if (!over || active.id === over.id) return;
-    setNotes((prev) => {
-      const oldIndex = prev.findIndex((n) => n.id === active.id);
-      const newIndex = prev.findIndex((n) => n.id === over.id);
-      return arrayMove(prev, oldIndex, newIndex);
-    });
-  }
+	function handleLogout() {
+		localStorage.removeItem("notesUser");
+		setUser(null);
+		setNotes([]);
+		setSearch("");
+		setShowForm(false);
+	}
 
-  const filtered = notes.filter(
-    (n) =>
-      (n.title || "").toLowerCase().includes(search.toLowerCase()) ||
-      (n.content || "").toLowerCase().includes(search.toLowerCase())
-  );
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: { distance: 8 },
+		}),
+	);
 
-  const activeColor =
-    activeNote ? CARD_COLORS[activeIndex % CARD_COLORS.length] : null;
+	function handleDragStart(event) {
+		const idx = notes.findIndex((n) => n.id === event.active.id);
+		setActiveNote(notes[idx]);
+		setActiveIndex(idx);
+	}
 
-  return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+	function handleDragEnd(event) {
+		const { active, over } = event;
+		setActiveNote(null);
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+		if (!over || active.id === over.id) return;
 
-        body {
-          background: #F7F5F0;
-          font-family: 'DM Sans', sans-serif;
-          color: #1A1A1A;
-          min-height: 100vh;
-        }
+		setNotes((prev) => {
+			const oldIndex = prev.findIndex((n) => n.id === active.id);
+			const newIndex = prev.findIndex((n) => n.id === over.id);
+			return arrayMove(prev, oldIndex, newIndex);
+		});
+	}
 
-        .app-wrapper {
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 48px 32px 80px;
-        }
+	const filtered = notes.filter(
+		(n) =>
+			(n.title || "").toLowerCase().includes(search.toLowerCase()) ||
+			(n.content || "").toLowerCase().includes(search.toLowerCase()),
+	);
 
-        /* ── Header ── */
-        .header {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          margin-bottom: 48px;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
+	const activeColor = activeNote
+		? CARD_COLORS[activeIndex % CARD_COLORS.length]
+		: null;
 
-        .header-left h1 {
-          font-family: 'Instrument Serif', serif;
-          font-size: clamp(2.6rem, 6vw, 4rem);
-          font-weight: 400;
-          line-height: 1;
-          color: #1A1A1A;
-          letter-spacing: -0.02em;
-        }
+	const userInitial = (user?.email || "U").charAt(0).toUpperCase();
 
-        .header-left p {
-          font-size: 13px;
-          color: #999;
-          font-weight: 300;
-          margin-top: 6px;
-          letter-spacing: 0.04em;
-        }
+	if (!user) return <AuthPage onAuth={handleAuth} />;
 
-        .header-right {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
+	return (
+		<div className="min-h-screen bg-[#F7F5F0] text-[#1A1A1A] font-sans">
+			<div className="max-w-[1400px] mx-auto px-8 pt-12 pb-20">
+				{/* HEADER */}
+				<header className="mb-12">
+					{/* Title row — always visible */}
+					<div className="flex items-end justify-between gap-4 mb-4">
+						<div>
+							<h1 className="text-[clamp(2.6rem,6vw,4rem)] leading-none tracking-[-0.02em] font-serif">
+								My Notes
+							</h1>
+							<p className="text-[13px] text-[#999] mt-[6px] tracking-[0.04em]">
+								drag to reorder · click to edit
+							</p>
+						</div>
 
-        /* ── Search ── */
-        .search-wrap {
-          position: relative;
-        }
+						{/* Desktop: show full controls inline with title */}
+						<div className="hidden sm:flex items-center gap-3">
+							{/* SEARCH */}
+							<div className="relative">
+								<svg
+									className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaa] w-[15px] h-[15px]"
+									viewBox="0 0 20 20"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+								>
+									<circle cx="8.5" cy="8.5" r="5.5" />
+									<path d="M14 14l3 3" strokeLinecap="round" />
+								</svg>
+								<input
+									className="bg-[#EEEBE5] rounded-full pl-9 pr-4 py-[10px] text-[13px]
+            w-[200px] focus:w-[240px] focus:bg-[#E8E4DC] outline-none transition-all duration-200"
+									placeholder="Search..."
+									value={search}
+									onChange={(e) => setSearch(e.target.value)}
+								/>
+							</div>
 
-        .search-wrap svg {
-          position: absolute;
-          left: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #aaa;
-          pointer-events: none;
-          width: 15px;
-          height: 15px;
-        }
+							{/* PROFILE */}
+							<details className="relative">
+								<summary className="flex items-center gap-2 bg-[#EEEBE5] rounded-full px-3 py-[7px] text-[12px] text-[#777] cursor-pointer max-w-[170px]">
+									<span className="w-6 h-6 flex items-center justify-center bg-black text-white rounded-full text-[11px]">
+										{userInitial}
+									</span>
+									<span className="truncate">{user.email}</span>
+								</summary>
+								<div className="absolute right-0 mt-2 bg-white rounded-lg shadow-[0_16px_40px_rgba(0,0,0,0.12)] p-2 min-w-[190px] z-10">
+									<p className="text-[12px] text-[#999] p-2 break-words">
+										{user.email}
+									</p>
+									<button
+										onClick={handleLogout}
+										className="w-full text-left bg-black text-white rounded-lg px-3 py-[9px] text-[13px] hover:bg-[#333] transition"
+									>
+										Logout
+									</button>
+								</div>
+							</details>
 
-        .search-input {
-          background: #EEEBE5;
-          border: none;
-          border-radius: 24px;
-          padding: 10px 16px 10px 36px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          color: #333;
-          outline: none;
-          width: 200px;
-          transition: background 0.2s, width 0.3s;
-        }
+							{/* ADD BUTTON */}
+							<button
+								onClick={() => setShowForm(true)}
+								className="flex items-center gap-2 bg-black text-white rounded-full px-5 py-[10px]
+          text-[13px] hover:bg-[#333] active:scale-95 transition-all duration-150"
+							>
+								<span className="w-[18px] h-[18px] flex items-center justify-center bg-white text-black rounded-full text-[16px]">
+									+
+								</span>
+								New Note
+							</button>
+						</div>
+					</div>
 
-        .search-input:focus {
-          background: #E8E4DC;
-          width: 240px;
-        }
+					{/* Mobile: compact toolbar row */}
+					<div className="flex sm:hidden items-center gap-2">
+						{/* SEARCH — grows to fill space */}
+						<div className="relative flex-1">
+							<svg
+								className="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaa] w-[14px] h-[14px]"
+								viewBox="0 0 20 20"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<circle cx="8.5" cy="8.5" r="5.5" />
+								<path d="M14 14l3 3" strokeLinecap="round" />
+							</svg>
+							<input
+								className="w-full bg-[#EEEBE5] rounded-full pl-9 pr-4 py-[9px] text-[13px]
+          focus:bg-[#E8E4DC] outline-none transition-all duration-200"
+								placeholder="Search..."
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+							/>
+						</div>
 
-        .search-input::placeholder { color: #BBB; }
+						{/* PROFILE — icon only on mobile */}
+						<details className="relative flex-shrink-0">
+							<summary className="flex items-center justify-center w-9 h-9 bg-[#EEEBE5] rounded-full cursor-pointer list-none">
+								<span className="w-6 h-6 flex items-center justify-center bg-black text-white rounded-full text-[11px]">
+									{userInitial}
+								</span>
+							</summary>
+							<div className="absolute right-0 mt-2 bg-white rounded-lg shadow-[0_16px_40px_rgba(0,0,0,0.12)] p-2 min-w-[190px] z-10">
+								<p className="text-[12px] text-[#999] p-2 break-words">
+									{user.email}
+								</p>
+								<button
+									onClick={handleLogout}
+									className="w-full text-left bg-black text-white rounded-lg px-3 py-[9px] text-[13px] hover:bg-[#333] transition"
+								>
+									Logout
+								</button>
+							</div>
+						</details>
 
-        /* ── Add button ── */
-        .add-btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: #1A1A1A;
-          color: #fff;
-          border: none;
-          border-radius: 24px;
-          padding: 10px 20px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background 0.2s, transform 0.15s;
-          letter-spacing: 0.01em;
-          white-space: nowrap;
-        }
+						{/* ADD BUTTON — compact label on mobile */}
+						<button
+							onClick={() => setShowForm(true)}
+							className="flex-shrink-0 flex items-center gap-1.5 bg-black text-white
+        rounded-full px-4 py-[9px] text-[13px] hover:bg-[#333] active:scale-95 transition-all duration-150"
+						>
+							<span className="w-[16px] h-[16px] flex items-center justify-center bg-white text-black rounded-full text-[14px] leading-none">
+								+
+							</span>
+							New
+						</button>
+					</div>
+				</header>
 
-        .add-btn:hover { background: #333; transform: translateY(-1px); }
-        .add-btn:active { transform: scale(0.97); }
+				{/* COUNT */}
+				<p className="text-[11px] text-[#BBB] tracking-[0.1em] uppercase mb-6">
+					{filtered.length} {filtered.length === 1 ? "note" : "notes"}
+				</p>
 
-        .add-btn-icon {
-          width: 18px;
-          height: 18px;
-          background: #fff;
-          color: #1A1A1A;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 16px;
-          line-height: 1;
-          flex-shrink: 0;
-        }
+				{/* GRID */}
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragStart={handleDragStart}
+					onDragEnd={handleDragEnd}
+				>
+					<SortableContext
+						items={filtered.map((n) => n.id)}
+						strategy={rectSortingStrategy}
+					>
+						<div className="grid gap-[18px] grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+							{filtered.length === 0 ? (
+								<div className="col-span-full text-center py-20 text-[#CCC]">
+									<div className="text-5xl mb-3">📋</div>
+									<p className="text-[15px]">No notes yet</p>
+									<span className="text-[13px] text-[#DDD]">
+										Click "New Note" to get started
+									</span>
+								</div>
+							) : (
+								filtered.map((note, i) => (
+									<NoteCard
+										key={note.id}
+										note={note}
+										refreshNotes={fetchNotes}
+										colorScheme={CARD_COLORS[i % CARD_COLORS.length]}
+									/>
+								))
+							)}
+						</div>
+					</SortableContext>
 
-        /* ── Note count ── */
-        .note-count {
-          font-size: 11px;
-          font-weight: 400;
-          color: #BBB;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          margin-bottom: 24px;
-        }
+					{/* DRAG OVERLAY FIXED */}
+					<DragOverlay>
+						{activeNote && activeColor && (
+							<div
+								className="
+                  rounded-2xl p-5
+                  shadow-[0_24px_60px_rgba(0,0,0,0.18)]
+                  scale-105
+                  pointer-events-none
+                "
+								style={{ background: activeColor.bg }}
+							>
+								<p className="text-[14px] font-medium">{activeNote.title}</p>
+							</div>
+						)}
+					</DragOverlay>
+				</DndContext>
+			</div>
 
-        /* ── Grid ── */
-        .notes-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 18px;
-        }
-
-        /* ── Empty ── */
-        .empty-state {
-          grid-column: 1 / -1;
-          text-align: center;
-          padding: 80px 0;
-          color: #CCC;
-        }
-
-        .empty-state .emoji { font-size: 48px; margin-bottom: 12px; }
-        .empty-state p { font-size: 15px; font-weight: 300; }
-        .empty-state span { font-size: 13px; color: #DDD; }
-
-        /* ── Modal overlay ── */
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(20, 18, 14, 0.35);
-          backdrop-filter: blur(6px);
-          z-index: 100;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 24px;
-          animation: fadeIn 0.18s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-
-        .modal-card {
-          animation: slideUp 0.22s cubic-bezier(0.34, 1.3, 0.64, 1);
-        }
-
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(24px) scale(0.97) }
-          to   { opacity: 1; transform: translateY(0) scale(1) }
-        }
-
-        /* ── Drag overlay ── */
-        .drag-ghost {
-          border-radius: 20px;
-          padding: 20px;
-          transform: rotate(2.5deg) scale(1.04);
-          box-shadow: 0 24px 60px rgba(0,0,0,0.18);
-          pointer-events: none;
-        }
-
-        .drag-ghost-title {
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-          font-size: 14px;
-          color: #1A1A1A;
-        }
-      `}</style>
-
-      <div className="app-wrapper">
-        {/* Header */}
-        <header className="header">
-          <div className="header-left">
-            <h1>My Notes</h1>
-            <p>drag to reorder · click to edit</p>
-          </div>
-          <div className="header-right">
-            <div className="search-wrap">
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="8.5" cy="8.5" r="5.5" />
-                <path d="M14 14l3 3" strokeLinecap="round" />
-              </svg>
-              <input
-                className="search-input"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <button className="add-btn" onClick={() => setShowForm(true)}>
-              <span className="add-btn-icon">+</span>
-              New Note
-            </button>
-          </div>
-        </header>
-
-        {/* Note count */}
-        <p className="note-count">
-          {filtered.length} {filtered.length === 1 ? "note" : "notes"}
-        </p>
-
-        {/* Grid with DnD */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={filtered.map((n) => n.id)}
-            strategy={rectSortingStrategy}
-          >
-            <div className="notes-grid">
-              {filtered.length === 0 ? (
-                <div className="empty-state">
-                  <div className="emoji">📋</div>
-                  <p>No notes yet</p>
-                  <span>Click "New Note" to get started</span>
-                </div>
-              ) : (
-                filtered.map((note, i) => (
-                  <NoteCard
-                    key={note.id}
-                    note={note}
-                    refreshNotes={fetchNotes}
-                    colorScheme={CARD_COLORS[i % CARD_COLORS.length]}
-                  />
-                ))
-              )}
-            </div>
-          </SortableContext>
-
-          <DragOverlay>
-            {activeNote && activeColor && (
-              <div
-                className="drag-ghost"
-                style={{ background: activeColor.bg }}
-              >
-                <p className="drag-ghost-title">{activeNote.title}</p>
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
-      </div>
-
-      {/* Modal */}
-      {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <NoteForm
-              refreshNotes={fetchNotes}
-              onClose={() => setShowForm(false)}
-              colors={CARD_COLORS}
-            />
-          </div>
-        </div>
-      )}
-    </>
-  );
+			{/* MODAL FIXED */}
+			{showForm && (
+				<div
+					onClick={() => setShowForm(false)}
+					className="
+            fixed inset-0
+            bg-[rgba(20,18,14,0.35)]
+            backdrop-blur-md
+            flex items-center justify-center
+            p-6 z-[100]
+          "
+				>
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="animate-[fadeIn_0.2s_ease]"
+					>
+						<NoteForm
+							refreshNotes={fetchNotes}
+							onClose={() => setShowForm(false)}
+							colors={CARD_COLORS}
+							userId={user.id}
+						/>
+					</div>
+				</div>
+			)}
+		</div>
+	);
 }
 
 export default App;

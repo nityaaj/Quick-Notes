@@ -1,5 +1,131 @@
 [
   {
+    "id": "1776162301991",
+    "userId": "1776094273231",
+    "title": "Hey there",
+    "content": "nityaa here",
+    "createdAt": "2026-04-14T10:25:01.992Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776160469306",
+    "userId": "1776094273231",
+    "title": "Train Ticket",
+    "content": "TOday ",
+    "createdAt": "2026-04-14T09:54:29.306Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776160452306",
+    "userId": "1776094273231",
+    "title": "Train Ticket",
+    "content": "today",
+    "createdAt": "2026-04-14T09:54:12.307Z",
+    "updatedAt": null,
+    "deletedAt": "2026-04-14T09:54:14.557Z"
+  },
+  {
+    "id": "1776160338254",
+    "userId": "1776094273231",
+    "title": "Shopping List ",
+    "content": "Grocery shopping \n- Veggies \n- Washing Powder \n- Musli \n- Dish Washer \n- Hair Dryer ",
+    "createdAt": "2026-04-14T09:52:18.255Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776158626697",
+    "userId": "1776094273231",
+    "title": "Hey There !!! Essay Writing ✍️ ",
+    "content": "Once apon a time there was a tree behind a hous in KAKA Town of Bhilwara ",
+    "createdAt": "2026-04-14T09:23:46.698Z",
+    "updatedAt": "2026-04-14T09:24:34.687Z",
+    "deletedAt": null
+  },
+  {
+    "id": "1776155516126",
+    "userId": "1776094273231",
+    "title": "TO DO List",
+    "content": "Breakfast at 9",
+    "createdAt": "2026-04-14T08:31:56.127Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776155373143",
+    "userId": "1776094273231",
+    "title": "Hey Siri!",
+    "content": "Tell me the best food stores near me....",
+    "createdAt": "2026-04-14T08:29:33.144Z",
+    "updatedAt": "2026-04-14T08:30:32.481Z",
+    "deletedAt": null
+  },
+  {
+    "id": "1776155298676",
+    "userId": "1776094273231",
+    "title": "Task Management ",
+    "content": "Make notes for Meeting ",
+    "createdAt": "2026-04-14T08:28:18.678Z",
+    "updatedAt": null,
+    "deletedAt": "2026-04-14T09:22:42.944Z"
+  },
+  {
+    "id": "1776154221518",
+    "userId": "1776094273231",
+    "title": "Hey There !!! Easy Writing ✍️ ",
+    "content": "Once apon a time there was a tree behind a hous in KAKA Town of Bhilwara ",
+    "createdAt": "2026-04-14T08:10:21.520Z",
+    "updatedAt": "2026-04-14T09:22:38.210Z",
+    "deletedAt": "2026-04-14T09:22:44.388Z"
+  },
+  {
+    "id": "1776152583223",
+    "userId": "1776094273231",
+    "title": "Electricity Bill",
+    "content": "1200 March ",
+    "createdAt": "2026-04-14T07:43:03.224Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776145584798",
+    "userId": "1776094273231",
+    "title": "fjenkfdnkf",
+    "content": "fmv dfvdf vmdf vmdf vdf",
+    "createdAt": "2026-04-14T05:46:24.801Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776095087744",
+    "userId": "1776094273231",
+    "title": "ihfhfjfjnsjfkc c c nmc ",
+    "content": " ndfsdfjsdnfjs",
+    "createdAt": "2026-04-13T15:44:47.746Z",
+    "updatedAt": "2026-04-14T05:46:09.110Z",
+    "deletedAt": null
+  },
+  {
+    "id": "1776095076978",
+    "userId": "1776094273231",
+    "title": "hey there ",
+    "content": "fjdsfjdfjsn\n",
+    "createdAt": "2026-04-13T15:44:36.979Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
+    "id": "1776094353983",
+    "userId": "1776094273231",
+    "title": "Hey there",
+    "content": "My first note",
+    "createdAt": "2026-04-13T15:32:33.984Z",
+    "updatedAt": null,
+    "deletedAt": null
+  },
+  {
     "id": "1776079785558",
     "title": "Shopping List",
     "content": "ginger almond oil potato coriender garlic pen",
