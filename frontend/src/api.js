@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5002",
+  baseURL: import.meta.env.VITE_API_URL || "https://quick-notes-backend-ygmq.onrender.com",
 });
 
 export default API;
