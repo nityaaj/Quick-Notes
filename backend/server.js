@@ -1,149 +1,178 @@
 const http = require("http");
 const fs = require("fs");
-
-const PORT = 5001;
-
+const crypto = require("crypto");
 const path = require("path");
-const filePath = path.join(__dirname, "notes.json");
 
-// read notes
+const PORT = 5002; // Changed port to avoid conflict
+
+const notesPath = path.join(__dirname, "notes.json");
+const usersPath = path.join(__dirname, "users.json");
+
+// ── helpers ──────────────────────────────────────────────
 function getNotes() {
-	try {
-		const data = fs.readFileSync(filePath, "utf-8");
-		return JSON.parse(data || "[]");
-	} catch (err) {
-		return [];
-	}
+  try { return JSON.parse(fs.readFileSync(notesPath, "utf-8") || "[]"); }
+  catch { return []; }
 }
-
-// save notes
 function saveNotes(notes) {
-	fs.writeFileSync(filePath, JSON.stringify(notes, null, 2));
+  fs.writeFileSync(notesPath, JSON.stringify(notes, null, 2));
 }
 
-const server = http.createServer((req, res) => {
-	// allow frontend connection
-	res.setHeader("Access-Control-Allow-Origin", "*");
-	res.setHeader(
-		"Access-Control-Allow-Methods",
-		"GET, POST, PUT, DELETE, OPTIONS",
-	);
-	res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+function getUsers() {
+  try { return JSON.parse(fs.readFileSync(usersPath, "utf-8") || "[]"); }
+  catch { return []; }
+}
+function saveUsers(users) {
+  fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+}
 
-	if (req.method === "OPTIONS") {
-		res.writeHead(200);
-		return res.end();
-	}
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
-	// -------- GET NOTES --------
-    const notes = getNotes().filter((note) => !note.deletedAt);
-    
-	if (req.method === "GET" && req.url === "/notes") {
-		const notes = getNotes();
+function parseBody(req) {
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk.toString()));
+    req.on("end", () => {
+      try { resolve(JSON.parse(body)); }
+      catch { resolve({}); }
+    });
+  });
+}
+// ─────────────────────────────────────────────────────────
 
-		res.writeHead(200, { "Content-Type": "application/json" });
-		return res.end(JSON.stringify(notes));
-	}
+const server = http.createServer(async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-	// -------- CREATE NOTE --------
-	if (req.method === "POST" && req.url === "/notes") {
-		let body = "";
+  if (req.method === "OPTIONS") { res.writeHead(200); return res.end(); }
 
-		req.on("data", (chunk) => {
-			body += chunk.toString();
-		});
+  // ── REGISTER ─────────────────────────────────────────
+  if (req.method === "POST" && req.url === "/auth/register") {
+    const { email, password } = await parseBody(req);
 
-		req.on("end", () => {
-			const { title, content } = JSON.parse(body);
+    if (!email || !password) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Email and password are required" }));
+    }
 
-			if (!title || title.trim() === "") {
-				res.writeHead(400);
-				return res.end("Title is required");
-			}
+    const users = getUsers();
+    if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
+      res.writeHead(409, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Email already registered" }));
+    }
 
-			const notes = getNotes();
+    const newUser = {
+      id: Date.now().toString(),
+      email: email.toLowerCase().trim(),
+      password: hashPassword(password),
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    };
 
-			const newNote = {
-				id: Date.now().toString(),
-				title,
-				content: content || "",
-				createdAt: new Date().toISOString(),
-				updatedAt: null,
-				deletedAt: null,
-			};
+    users.push(newUser);
+    saveUsers(users);
 
-			notes.unshift(newNote);
-			saveNotes(notes);
+    const { password: _, ...safeUser } = newUser;
+    res.writeHead(201, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ user: safeUser }));
+  }
 
-			res.writeHead(201, { "Content-Type": "application/json" });
-			res.end(JSON.stringify(newNote));
-		});
+  // ── LOGIN ─────────────────────────────────────────────
+  if (req.method === "POST" && req.url === "/auth/login") {
+    const { email, password } = await parseBody(req);
 
-		return;
-	}
+    if (!email || !password) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Email and password are required" }));
+    }
 
-	// -------- DELETE NOTE --------
-	if (req.method === "DELETE" && req.url.startsWith("/notes/")) {
-		const id = req.url.split("/")[2];
+    const users = getUsers();
+    const user = users.find(
+      (u) => u.email === email.toLowerCase().trim() && u.password === hashPassword(password)
+    );
 
-		let notes = getNotes();
-		notes = notes.map((note) => {
-			if (note.id === id) {
-				return {
-					...note,
-					deletedAt: new Date().toISOString(),
-				};
-			}
-			return note;
-		});
+    if (!user) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ error: "Invalid email or password" }));
+    }
 
-		saveNotes(notes);
+    const { password: _, ...safeUser } = user;
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ user: safeUser }));
+  }
 
-		res.writeHead(200);
-		return res.end("Deleted");
-	}
+  // ── GET NOTES (filtered by userId) ───────────────────
+  if (req.method === "GET" && req.url.startsWith("/notes")) {
+    const url = new URL(req.url, `http://localhost:${PORT}`);
+    const userId = url.searchParams.get("userId");
 
-	// -------- UPDATE NOTE --------
-	else if (req.method === "PUT" && req.url.startsWith("/notes/")) {
-		const id = req.url.split("/")[2];
+    let notes = getNotes().filter((n) => !n.deletedAt);
+    if (userId) notes = notes.filter((n) => n.userId === userId);
 
-		let body = "";
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(notes));
+  }
 
-		req.on("data", (chunk) => {
-			body += chunk.toString();
-		});
+  // ── CREATE NOTE ───────────────────────────────────────
+  if (req.method === "POST" && req.url === "/notes") {
+    const { title, content, userId } = await parseBody(req);
 
-		req.on("end", () => {
-			const { title, content } = JSON.parse(body);
+    if (!title || title.trim() === "") {
+      res.writeHead(400); return res.end("Title is required");
+    }
 
-			let notes = getNotes();
+    const notes = getNotes();
+    const newNote = {
+      id: Date.now().toString(),
+      userId: userId || null,
+      title,
+      content: content || "",
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      deletedAt: null,
+    };
 
-			notes = notes.map((note) => {
-				if (note.id === id) {
-					return {
-						...note,
-						title: title !== undefined ? title : note.title,
-						content: content !== undefined ? content : note.content,
-						updatedAt: new Date().toISOString(),
-					};
-				}
-				return note;
-			});
+    notes.unshift(newNote);
+    saveNotes(notes);
 
-			saveNotes(notes);
+    res.writeHead(201, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(newNote));
+  }
 
-			res.writeHead(200, { "Content-Type": "application/json" });
-			res.end(JSON.stringify({ message: "Note updated" }));
-		});
+  // ── DELETE NOTE ───────────────────────────────────────
+  if (req.method === "DELETE" && req.url.startsWith("/notes/")) {
+    const id = req.url.split("/")[2];
+    let notes = getNotes();
+    notes = notes.map((n) =>
+      n.id === id ? { ...n, deletedAt: new Date().toISOString() } : n
+    );
+    saveNotes(notes);
+    res.writeHead(200); return res.end("Deleted");
+  }
 
-		return;
-	}
+  // ── UPDATE NOTE ───────────────────────────────────────
+  if (req.method === "PUT" && req.url.startsWith("/notes/")) {
+    const id = req.url.split("/")[2];
+    const { title, content } = await parseBody(req);
 
-	// -------- NOT FOUND --------
-	res.writeHead(404);
-	res.end("Route not found");
+    let notes = getNotes();
+    notes = notes.map((n) =>
+      n.id === id
+        ? { ...n, title: title ?? n.title, content: content ?? n.content, updatedAt: new Date().toISOString() }
+        : n
+    );
+    saveNotes(notes);
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ message: "Note updated" }));
+  }
+
+  // ── NOT FOUND ─────────────────────────────────────────
+  res.writeHead(404); res.end("Route not found");
 });
 
 server.listen(PORT, () => {
-	console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
