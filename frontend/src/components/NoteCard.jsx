@@ -34,6 +34,12 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
   })();
 
   async function handleDelete() {
+    const confirmed = window.confirm(
+      `Delete "${note.title}"? This action cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
     setDeleting(true);
     await API.delete(`/notes/${note.id}`);
     refreshNotes();
