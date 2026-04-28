@@ -9,7 +9,7 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
   const [editContent, setEditContent] = useState(note.content);
   const [deleting, setDeleting]       = useState(false);
 
-  const { card, accent, shadow } = colorScheme;
+  const { bg, accent, shadow } = colorScheme;
 
   const {
     attributes,
@@ -72,7 +72,7 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
         <style>{CARD_STYLES}</style>
         <div
           ref={setNodeRef}
-          style={{ ...dndStyle, background: card, "--accent": accent, "--shadow": shadow }}
+          style={{ ...dndStyle, background: bg, "--accent": accent, "--shadow": shadow }}
           className="note-card editing"
         >
           <div className="edit-header">
@@ -111,7 +111,7 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
       <style>{CARD_STYLES}</style>
       <div
         ref={setNodeRef}
-        style={{ ...dndStyle, background: card, "--accent": accent, "--shadow": shadow }}
+        style={{ ...dndStyle, background: bg, "--accent": accent, "--shadow": shadow }}
         className={`note-card view ${isDragging ? "is-dragging" : ""} ${deleting ? "is-deleting" : ""}`}
         // ↓ drag listeners on the WHOLE card so anywhere you grab it works
         {...attributes}

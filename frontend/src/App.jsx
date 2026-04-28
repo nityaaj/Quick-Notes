@@ -18,13 +18,21 @@ import NoteCard from "./components/NoteCard";
 import AuthPage from "./components/AuthPage";
 
 export const CARD_COLORS = [
-	{ id: "yellow", bg: "#FFF3CC", accent: "#E6B800" },
-	{ id: "pink", bg: "#FFE0E0", accent: "#E05555" },
-	{ id: "green", bg: "#D9F5E8", accent: "#2E9E65" },
-	{ id: "blue", bg: "#E0EEFF", accent: "#3070D6" },
-	{ id: "purple", bg: "#F0E0FF", accent: "#8040C8" },
-	{ id: "peach", bg: "#FFE8D6", accent: "#D06020" },
+	{ id: "yellow", bg: "#FFF3CC", accent: "#E6B800", shadow: "rgba(230,184,0,0.28)" },
+	{ id: "pink", bg: "#FFE0E0", accent: "#E05555", shadow: "rgba(224,85,85,0.26)" },
+	{ id: "green", bg: "#D9F5E8", accent: "#2E9E65", shadow: "rgba(46,158,101,0.24)" },
+	{ id: "blue", bg: "#E0EEFF", accent: "#3070D6", shadow: "rgba(48,112,214,0.24)" },
+	{ id: "purple", bg: "#F0E0FF", accent: "#8040C8", shadow: "rgba(128,64,200,0.24)" },
+	{ id: "peach", bg: "#FFE8D6", accent: "#D06020", shadow: "rgba(208,96,32,0.24)" },
 ];
+
+function getColorScheme(note, fallbackIndex = 0) {
+	const fallbackColor = CARD_COLORS[fallbackIndex % CARD_COLORS.length];
+
+	if (!note?.colorId) return fallbackColor;
+
+	return CARD_COLORS.find((color) => color.id === note.colorId) || fallbackColor;
+}
 
 function App() {
 	const [user, setUser] = useState(() => {
@@ -97,9 +105,7 @@ function App() {
 			(n.content || "").toLowerCase().includes(search.toLowerCase()),
 	);
 
-	const activeColor = activeNote
-		? CARD_COLORS[activeIndex % CARD_COLORS.length]
-		: null;
+	const activeColor = activeNote ? getColorScheme(activeNote, activeIndex) : null;
 
 	const userInitial = (user?.email || "U").charAt(0).toUpperCase();
 
@@ -267,7 +273,7 @@ function App() {
 										key={note.id}
 										note={note}
 										refreshNotes={fetchNotes}
-										colorScheme={CARD_COLORS[i % CARD_COLORS.length]}
+										colorScheme={getColorScheme(note, i)}
 									/>
 								))
 							)}

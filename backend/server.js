@@ -143,7 +143,6 @@ const server = http.createServer(async (req, res) => {
 				data: {
 					title,
 					content,
-					updatedAt: new Date(),
 				},
 			});
 
