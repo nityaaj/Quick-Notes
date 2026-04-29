@@ -23,8 +23,10 @@ model Note {
   userId    String
   colorId   String?
   createdAt DateTime @default(now())
-  updatedAt DateTime?
+  updatedAt DateTime? @updatedAt
   deletedAt DateTime? 
 
   user      User @relation(fields: [userId], references: [id])
+  sharedWith String[] @default([]) // Array of user IDs the note is shared with
+  isShared   Boolean  @default(false) // Indicates if the note is shared
 }

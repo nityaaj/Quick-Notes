@@ -8,6 +8,8 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
   const [editTitle, setEditTitle]     = useState(note.title);
   const [editContent, setEditContent] = useState(note.content);
   const [deleting, setDeleting]       = useState(false);
+  // const [shareEmail, setShareEmail]   = useState("");
+  const [sharing, setSharing]         = useState(false);
 
   const { bg, accent, shadow } = colorScheme;
 
@@ -57,6 +59,28 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
   console.log("Updated!");
   setIsEditing(false);
   refreshNotes();
+}
+
+  async function handleShare(email) {
+  if (!email) {
+    alert("Please enter an email to share the note.");
+    return;
+  }
+
+  setSharing(true);
+
+  try {
+    await API.post("/notes/share", {
+      noteId: note.id,
+      sharedWithEmail: email,
+    });
+
+    alert("Note shared successfully!");
+  } catch (err) {
+    alert(err.response?.data?.error || "Failed to share note.");
+  } finally {
+    setSharing(false);
+  }
 }
 
   function cancelEdit() {
@@ -142,8 +166,31 @@ function NoteCard({ note, refreshNotes, colorScheme }) {
               </svg>
             </button>
             <button
+              className="action-btn share"
+              onClick={(e) => {
+  e.stopPropagation();
+  const email = prompt("Enter the email to share the note:");
+  if (email) {
+    handleShare(email); // ✅ pass directly
+  }
+}}
+              title="Share"
+              onPointerDown={(e) => e.stopPropagation()} // prevent drag triggering on button
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+            </button>
+            <button
               className="action-btn delete"
-              onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
               title="Delete"
               onPointerDown={(e) => e.stopPropagation()} // prevent drag triggering on button
             >

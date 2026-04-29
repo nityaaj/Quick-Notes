@@ -99,10 +99,18 @@ const server = http.createServer(async (req, res) => {
 		if (req.method === "GET" && pathname === "/notes") {
 			const userId = url.searchParams.get("userId");
 
+			if (!userId) {
+				res.writeHead(400, { "Content-Type": "application/json" });
+				return res.end(JSON.stringify({ error: "User ID is required" }));
+			}
+
 			const notes = await prisma.note.findMany({
 				where: {
-					userId,
 					deletedAt: null,
+					OR: [
+						{ userId },
+						{ sharedWith: { has: userId } },
+					],
 				},
 				orderBy: { createdAt: "desc" },
 			});
@@ -138,16 +146,17 @@ const server = http.createServer(async (req, res) => {
 			const id = pathname.split("/").pop();
 			const { title, content } = await parseBody(req);
 
-			await prisma.note.update({
+			const updatedNote = await prisma.note.update({
 				where: { id },
 				data: {
 					title,
 					content,
+					updatedAt: new Date(),
 				},
 			});
 
 			res.writeHead(200, { "Content-Type": "application/json" });
-			return res.end(JSON.stringify({ message: "Updated" }));
+			return res.end(JSON.stringify(updatedNote));
 		}
 
 		// ── DELETE NOTE ──────────────────────────────────────
@@ -168,11 +177,61 @@ const server = http.createServer(async (req, res) => {
 				where: { id },
 				data: {
 					deletedAt: new Date(),
+					updatedAt: new Date(),
 				},
 			});
 
 			res.writeHead(200);
 			return res.end(JSON.stringify({ message: "Soft deleted" }));
+		}
+
+		// ── SHARE NOTE ────────────────────────────────────────
+		if (req.method === "POST" && pathname === "/notes/share") {
+			const { noteId, sharedWithEmail } = await parseBody(req);
+
+			if (!noteId || !sharedWithEmail) {
+				res.writeHead(400);
+				return res.end(JSON.stringify({ error: "Note ID and email required" }));
+			}
+
+			const userToShareWith = await prisma.user.findUnique({
+				where: { email: sharedWithEmail },
+			});
+
+			if (!userToShareWith) {
+				res.writeHead(404);
+				return res.end(JSON.stringify({ error: "User not found" }));
+			}
+
+			const note = await prisma.note.findUnique({
+				where: { id: noteId },
+			});
+
+			if (!note) {
+				res.writeHead(404);
+				return res.end(JSON.stringify({ error: "Note not found" }));
+			}
+
+			if (!note.sharedWith) {
+				note.sharedWith = [];
+			}
+
+			if (note.sharedWith.includes(userToShareWith.id)) {
+				res.writeHead(200, { "Content-Type": "application/json" });
+				return res.end(JSON.stringify({ message: "Note already shared" }));
+			}
+
+			await prisma.note.update({
+				where: { id: noteId },
+				data: {
+					isShared: true,
+					sharedWith: [...note.sharedWith, userToShareWith.id],
+					updatedAt: new Date(),
+				},
+			});
+
+			res.writeHead(200);
+			return res.end(JSON.stringify({ message: "Note shared successfully" }));
 		}
 
 		// ── NOT FOUND ────────────────────────────────────────
